@@ -12,6 +12,7 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -36,23 +37,39 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Map map;
     private SurfaceView sv;
     private Button camerabutton;
+    private MyView mv;
+    private Button bt;
 
     //控制器
     private MyCamera1 camera1;
+    private MagDetector magDetector;
 
     //定时器
     private Timer cameratimer;
     private TimerTask cameratask;
 
+    private boolean pause=false;
+
     private MyCamera1.MyCameraCallback myCameraCallback=new MyCamera1.MyCameraCallback() {
         @Override
         public void UpdateText(String text) {
-            map.setText(text);
+            if (map!=null) {
+                map.setText(text);
+            }
         }
 
         @Override
         public void UpdateImage(Bitmap bitmap) {
 
+        }
+    };
+
+    private MagDetector.MagDetectorCallback magDetectorCallback=new MagDetector.MagDetectorCallback() {
+        @Override
+        public void MagState(float var, int speed) {
+            if (map!=null){
+                map.setText(""+var);
+            }
         }
     };
 
@@ -67,6 +84,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         }
 
+        float[] data1={0,1,2,3,4,5,4,3,2,1,0};
+        float[] data2=Utils.smoothFilter(data1,3);
+
+        for (int i=0;i<data2.length;i++){
+            Log.e("TEST",data2[i]+"");
+        }
+
         Init();
     }
 
@@ -77,12 +101,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //initUi
         camerabutton=(Button)findViewById(R.id.camera);
         sv=(SurfaceView)findViewById(R.id.surfaceView);
+        bt=(Button)findViewById(R.id.pause);
+        mv=(MyView)findViewById(R.id.myView);
+        mv.setRange(100);
         map=(Map)findViewById(R.id.map);
         map.setText("迦南地");
 
         //控制器
+        magDetector=new MagDetector(magDetectorCallback);
         camera1=new MyCamera1(this,sv,myCameraCallback);
-        camera1.openCamera();
+        //camera1.openCamera();
 
         camerabutton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -94,6 +122,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     StartCameraTimer(1000);
                     Toast.makeText(MainActivity.this,"开始连续拍照",Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        bt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                pause=!pause;
             }
         });
     }
@@ -131,6 +166,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 map.setAngle(event.values[0]);
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
+                if (magDetector!=null&&!pause) {
+                    magDetector.refreshMag(event.values);
+                    mv.setData(magDetector.Mag);
+                }
                 break;
         }
     }

@@ -30,6 +30,7 @@ import java.util.List;
 public class MyCamera1 {
     //camera1 API
     private Camera camera;
+    private Camera.Parameters parameters;
 
     //Ui
     private SurfaceView surfaceView;
@@ -80,24 +81,27 @@ public class MyCamera1 {
         try {
             camera= Camera.open();
 
-            Camera.Parameters parameters=camera.getParameters();
-//            parameters.set("zsl","off");
-//            parameters.set("auto-exposure-lock","true");
-//            parameters.set("hw-professional-mode","on");
-//
-//            //ISO
-//            parameters.set("hw-sensor-iso","1600");
-//            //快门
-//            parameters.set("hw-sensor-exposure-time","0.0008");
-//            List<Camera.Size> list= parameters.getSupportedPictureSizes();
-//            Camera.Size max=null;
-//            for(int i=0,x=0;i<list.size();i++){
-//                if(x<list.get(i).width){
-//                    max=list.get(i);
-//                    x=max.width;
-//                }
-//            }
-//            parameters.setPictureSize(max.width,max.height);
+            if (parameters==null){
+                parameters=camera.getParameters();
+                parameters.set("zsl","off");
+                parameters.set("auto-exposure-lock","true");
+                parameters.set("hw-professional-mode","on");
+
+                //ISO
+                parameters.set("hw-sensor-iso","1600");
+                //快门
+                parameters.set("hw-sensor-exposure-time","0.0008");
+                List<Camera.Size> list= parameters.getSupportedPictureSizes();
+                Camera.Size max=null;
+                for(int i=0;i<list.size();i++){
+                    if(1000<list.get(i).width){
+                        max=list.get(i);
+                        break;
+                    }
+                }
+                parameters.setPictureSize(max.width,max.height);
+                parameters.setRotation(90);
+            }
             camera.setParameters(parameters);
 
             camera.setPreviewDisplay(holder);
@@ -126,9 +130,6 @@ public class MyCamera1 {
 
                 //获得图片的像素
                 Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-
-                //图片旋转
-                bitmap=rotateBitmap(bitmap,90);
 
                 //后续处理
                 getXY(turnToGrey(bitmap),bitmap.getWidth(),bitmap.getHeight());
@@ -191,21 +192,7 @@ public class MyCamera1 {
                 b[width * i + j]=(byte) (grey & 0xFF);
             }
         }
-        //bitmap.recycle();
         return b;
-    }
-
-    private Bitmap rotateBitmap(Bitmap origin, float alpha) {
-        if (origin == null) {
-            return null;
-        }
-        int width = origin.getWidth();
-        int height = origin.getHeight();
-        Matrix matrix = new Matrix();
-        matrix.setRotate(alpha);
-        // 围绕原地进行旋转
-        origin = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, false);
-        return origin;
     }
 
     private void SavePicture(byte[] bytes){
