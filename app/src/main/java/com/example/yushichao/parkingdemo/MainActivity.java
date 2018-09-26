@@ -102,16 +102,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.main);
 
         if(!hasPermissionsGranted(PERMISSIONS)) {
-            if(Build.VERSION.SDK_INT>=23) {
+            if (Build.VERSION.SDK_INT >= 23) {
                 requestPermissions(PERMISSIONS, 1);
             }
-        }
-
-        float[] data1={0,1,2,3,4,5,4,3,2,1,0};
-        float[] data2=Utils.smoothFilter(data1,3);
-
-        for (int i=0;i<data2.length;i++){
-            Log.e("TEST",data2[i]+"");
         }
 
         Init();
