@@ -82,7 +82,7 @@ public class MyView extends View{
             Paint paint1 = new Paint();
             paint1.setColor(Color.BLACK);
             paint1.setStrokeWidth(5);
-            paint1.setTextSize(60);
+            paint1.setTextSize(50);
             paint1.setStyle(Paint.Style.STROKE);
 
             canvas.drawLine(Width/2,0,Width/2,Height,paint1);
@@ -105,7 +105,7 @@ public class MyView extends View{
             canvas.drawPath(path,paint1);
 
             int[] peak=Utils.getPeakNum2(data0);
-            Log.e("Pass","Hello");
+            int peaknum=Utils.getPeakNum(data0);
             paint1.setColor(Color.GREEN);
             for (int i=0;i<peak.length;i++){
                 if (peak[i]==1){
@@ -119,6 +119,10 @@ public class MyView extends View{
                     canvas.drawPoint(data0[i]*ix,iy*i,paint1);
                 }
             }
+
+            paint1.setColor(Color.RED);
+            paint1.setStrokeWidth(5);
+            canvas.drawText("地磁峰值:"+peaknum,0,50,paint1);
         }
     }
 }

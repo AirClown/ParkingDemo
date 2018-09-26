@@ -3,6 +3,7 @@ package com.example.yushichao.parkingdemo;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -60,7 +61,7 @@ public class Map extends View{
         super.onDraw(canvas);
 
         if (MapRadio==0){
-            MapRadio=((float) canvas.getHeight()*canvas.getWidth())/1000000;
+            MapRadio=1.3f;
         }
 
         DrawLamp(canvas);
@@ -72,15 +73,15 @@ public class Map extends View{
     private void DrawPosition(Canvas canvas){
         if (X!=0&&Y!=0){
             Paint paint = new Paint();
-            paint.setColor(Color.GREEN);
+            paint.setColor(Color.argb(255,255,69,0));
             paint.setStrokeWidth(5);
+            paint.setAlpha(150);
 
-            canvas.drawCircle(MapRadio*X,MapRadio*Y,50,paint);
-
-            int x=(int)(X+80*Math.sin(angle)/MapRadio);
-            int y=(int)(Y-80*Math.cos(angle)/MapRadio);
+            int x=(int)(X+30*Math.sin(angle)/MapRadio);
+            int y=(int)(Y-30*Math.cos(angle)/MapRadio);
 
             canvas.drawLine(MapRadio*X,MapRadio*Y,MapRadio*x,MapRadio*y,paint);
+            canvas.drawCircle(MapRadio*X,MapRadio*Y,20,paint);
         }else {
             Log.e("MapError","No Position");
         }
@@ -89,8 +90,8 @@ public class Map extends View{
     private void DrawLamp(Canvas canvas){
         if (lamps!=null&&lamps.size()>0){
             Paint paint = new Paint();
-            paint.setColor(Color.YELLOW);
-            paint.setStrokeWidth(5);
+            paint.setColor(Color.GREEN);
+            paint.setStrokeWidth(10);
             paint.setStyle(Paint.Style.STROKE);
             paint.setAlpha(200);
 
@@ -106,7 +107,7 @@ public class Map extends View{
         if (lines!=null&&lines.size()>0){
             Paint paint = new Paint();
             paint.setColor(Color.GRAY);
-            paint.setStrokeWidth(5);
+            paint.setStrokeWidth(10);
             paint.setStyle(Paint.Style.STROKE);
 
             for (Line line:lines){

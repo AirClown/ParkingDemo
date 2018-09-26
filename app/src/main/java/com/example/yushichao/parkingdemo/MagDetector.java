@@ -9,6 +9,7 @@ import android.util.Log;
 public class MagDetector {
 
     public float Mag;
+    public float speed;
 
     private int Num=100;
     private float[] Mags;
@@ -16,18 +17,18 @@ public class MagDetector {
 
     private int speed_num=100;
     private float[] speed_value;
-    private float speed;
 
     private MagDetectorCallback callback;
 
     public interface MagDetectorCallback{
-        void MagState(float var,int speed);
+        void MagState(float var,float speed);
     }
 
     public MagDetector(MagDetectorCallback callback){
         Mags=new float[Num];
         speed_value=new float[speed_num];
         count=0;
+        speed=0;
         this.callback=callback;
     }
 
@@ -71,11 +72,9 @@ public class MagDetector {
 
         var/=diff.length;
         speedEstimate(var);
-//        int peak=Utils.getPeakNum(speed_value);
-//        speedEstimate(peak);
     }
 
     private void speedEstimate(float var){
-         callback.MagState(var,0);
+         callback.MagState(var,speed);
     }
 }

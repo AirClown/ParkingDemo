@@ -47,6 +47,8 @@ public class MyCamera1 {
         void UpdateText(String text);
 
         void UpdateImage(Bitmap bitmap);
+
+        void UpdateLamp(int LampId);
     }
 
     private MyCameraCallback callback;

@@ -13,12 +13,12 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -43,12 +43,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //控制器
     private MyCamera1 camera1;
     private MagDetector magDetector;
+    private PositionCalCulate positionCalCulate;
 
     //定时器
     private Timer cameratimer;
     private TimerTask cameratask;
 
     private boolean pause=false;
+
+    //拓扑图数据
+    private List<Line> lines;
+    private List<Lamp> lamps;
 
     private MyCamera1.MyCameraCallback myCameraCallback=new MyCamera1.MyCameraCallback() {
         @Override
@@ -62,13 +67,31 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         public void UpdateImage(Bitmap bitmap) {
 
         }
+
+        @Override
+        public void UpdateLamp(int LampId) {
+            positionCalCulate.setLampId(LampId);
+        }
     };
 
     private MagDetector.MagDetectorCallback magDetectorCallback=new MagDetector.MagDetectorCallback() {
         @Override
-        public void MagState(float var, int speed) {
+        public void MagState(float var, float speed) {
             if (map!=null){
                 map.setText(""+var);
+            }
+
+            if (positionCalCulate!=null){
+                positionCalCulate.setSpeed(10*speed);
+            }
+        }
+    };
+
+    private PositionCalCulate.PositionCallback positionCallback=new PositionCalCulate.PositionCallback() {
+        @Override
+        public void positionChanged(int x, int y) {
+            if (map!=null) {
+                map.setPosition(x, y);
             }
         }
     };
@@ -98,19 +121,29 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //开启传感器
         manager=(SensorManager)getSystemService(Context.SENSOR_SERVICE);
 
+        //获取拓扑图数据
+        lines=Utils.getLine();
+        lamps=Utils.getLamp();
+
         //initUi
         camerabutton=(Button)findViewById(R.id.camera);
         sv=(SurfaceView)findViewById(R.id.surfaceView);
         bt=(Button)findViewById(R.id.pause);
+
         mv=(MyView)findViewById(R.id.myView);
         mv.setRange(100);
+
         map=(Map)findViewById(R.id.map);
         map.setText("迦南地");
+        map.setLine(lines);
+        map.setLamp(lamps);
 
         //控制器
         magDetector=new MagDetector(magDetectorCallback);
         camera1=new MyCamera1(this,sv,myCameraCallback);
         //camera1.openCamera();
+        positionCalCulate=new PositionCalCulate(positionCallback);
+        positionCalCulate.setTopo(lines,lamps);
 
         camerabutton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -160,9 +193,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             case Sensor.TYPE_ACCELEROMETER:
                 break;
             case Sensor.TYPE_LIGHT:
-                map.setPosition(250,250);
                 break;
             case Sensor.TYPE_ORIENTATION:
+                positionCalCulate.setAngle(event.values[0]-0);//110为地图偏角
                 map.setAngle(event.values[0]);
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
