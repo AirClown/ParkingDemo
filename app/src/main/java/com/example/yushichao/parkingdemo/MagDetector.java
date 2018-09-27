@@ -1,10 +1,7 @@
 package com.example.yushichao.parkingdemo;
 
-import android.util.Log;
-
-/**
- * Created by LiteShare on 2018/9/21.
- */
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MagDetector {
 
@@ -18,6 +15,11 @@ public class MagDetector {
     private int speed_num=100;
     private float[] speed_value;
 
+    private Timer timer;
+    private TimerTask task;
+
+    private MyFile file;
+
     private MagDetectorCallback callback;
 
     public interface MagDetectorCallback{
@@ -30,23 +32,44 @@ public class MagDetector {
         count=0;
         speed=0;
         this.callback=callback;
+
+        timer=new Timer();
+        task=new TimerTask() {
+            @Override
+            public void run() {
+                calculateMag(Mag);
+            }
+        };
+        timer.schedule(task,100,20);
     }
 
     public void refreshMag(float[] mags){
+        Mag=(float)Math.sqrt(mags[0]*mags[0]+mags[1]*mags[1]+mags[2]*mags[2]);
+    }
+
+    public void saveData(String path){//path=context.getExternalFilesDir(null)
+        file=new MyFile(path,"Mag.txt");
+        file.CreateFile();
+    }
+
+    private void calculateMag(float mag){
         if(Mags.length==0){
             return;
         }
 
-        Mags[count]=(float)Math.sqrt(mags[0]*mags[0]+mags[1]*mags[1]+mags[2]*mags[2]);
+        Mags[count]=mag;
         speed_value[count%speed_num]=Mags[count];
-        Mag=Mags[count];
+
+        if (file!=null){
+            file.WriteIntoFile(mag+"");
+        }
 
         if (count%speed_num==speed_num-1){
             detectorState();
         }
 
-        if (++count==Num){
-            count=0;
+        if (++count==Num) {
+            count = 0;
         }
     }
 
