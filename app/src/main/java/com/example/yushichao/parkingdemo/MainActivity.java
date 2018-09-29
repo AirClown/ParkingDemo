@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         @Override
         public void MagState(float var, float speed) {
             if (map!=null){
-                map.setText(""+var);
+                map.setText("速度估计:"+(int)(speed*3.6f)+"km/h"+"|方差："+var);
             }
 
             if (positionCalCulate!=null){
@@ -133,8 +133,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         //控制器
         magDetector=new MagDetector(magDetectorCallback);
+        magDetector.saveData(this.getExternalFilesDir(null)+"");
         camera1=new MyCamera1(this,sv,myCameraCallback);
-        //camera1.openCamera();
+        camera1.openCamera();
+
         positionCalCulate=new PositionCalCulate(positionCallback);
         positionCalCulate.setTopo(lines,lamps);
 
@@ -186,6 +188,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             case Sensor.TYPE_ACCELEROMETER:
                 break;
             case Sensor.TYPE_LIGHT:
+                map.invalidate();
                 break;
             case Sensor.TYPE_ORIENTATION:
                 positionCalCulate.setAngle(event.values[0]-0);//110为地图偏角

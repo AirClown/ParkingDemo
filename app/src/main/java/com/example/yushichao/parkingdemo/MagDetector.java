@@ -6,13 +6,16 @@ import java.util.TimerTask;
 public class MagDetector {
 
     public float Mag;
-    public float speed;
+
+    private int speed_n=5;
+    private int speed_count=0;
+    private float[] speed;
 
     private int Num=100;
     private float[] Mags;
     private int count;
 
-    private int speed_num=100;
+    private int speed_num=1000/40;
     private float[] speed_value;
 
     private Timer timer;
@@ -30,7 +33,7 @@ public class MagDetector {
         Mags=new float[Num];
         speed_value=new float[speed_num];
         count=0;
-        speed=0;
+        speed=new float[speed_n];
         this.callback=callback;
 
         timer=new Timer();
@@ -40,7 +43,7 @@ public class MagDetector {
                 calculateMag(Mag);
             }
         };
-        timer.schedule(task,100,20);
+        timer.schedule(task,100,40);
     }
 
     public void refreshMag(float[] mags){
@@ -98,6 +101,24 @@ public class MagDetector {
     }
 
     private void speedEstimate(float var){
-         callback.MagState(var,speed);
+
+        int x=(int)(var/0.1);
+
+        if (x<=5){
+            speed[speed_count]=0;
+        }else{
+            speed[speed_count]=var*2f;
+        }
+
+        if(++speed_count==speed_n){
+            speed_count=0;
+        }
+
+        float ave=0;
+        for (int i=0;i<speed.length;i++){
+            ave+=speed[i];
+        }
+
+        callback.MagState(var,ave/speed.length);
     }
 }

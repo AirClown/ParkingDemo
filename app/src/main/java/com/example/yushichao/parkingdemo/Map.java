@@ -49,7 +49,6 @@ public class Map extends View{
     public void setPosition(int x,int y){
         this.X=x;
         this.Y=y;
-        invalidate();
     }
 
     public void setAngle(float angle){
@@ -61,7 +60,7 @@ public class Map extends View{
         super.onDraw(canvas);
 
         if (MapRadio==0){
-            MapRadio=1.3f;
+            MapRadio=0.000677f*(float) Math.sqrt(canvas.getHeight()*canvas.getWidth());
         }
 
         DrawLamp(canvas);
@@ -122,8 +121,8 @@ public class Map extends View{
     private void DrewText(Canvas canvas){
         Paint paint = new Paint();
         paint.setColor(Color.RED);
-        paint.setTextSize(100);
+        paint.setTextSize(60);
         paint.setAlpha(100);
-        canvas.drawText(text,0,100,paint);
+        canvas.drawText(text,0,300,paint);
     }
 }
