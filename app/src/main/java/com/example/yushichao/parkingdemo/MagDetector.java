@@ -5,18 +5,15 @@ import java.util.TimerTask;
 
 public class MagDetector {
 
-    public float Mag;
+    public float mag;
+    private float[] values;
+    private int count=0;
 
-    private int speed_n=5;
+
+    private int var_num=100;
+
+    private float[] speeds=new float[100];
     private int speed_count=0;
-    private float[] speed;
-
-    private int Num=100;
-    private float[] Mags;
-    private int count;
-
-    private int speed_num=1000/40;
-    private float[] speed_value;
 
     private Timer timer;
     private TimerTask task;
@@ -25,29 +22,29 @@ public class MagDetector {
 
     private MagDetectorCallback callback;
 
+    public float ind=50f;
+
     public interface MagDetectorCallback{
         void MagState(float var,float speed);
     }
 
     public MagDetector(MagDetectorCallback callback){
-        Mags=new float[Num];
-        speed_value=new float[speed_num];
-        count=0;
-        speed=new float[speed_n];
+        values=new float[1000];
+
         this.callback=callback;
 
         timer=new Timer();
         task=new TimerTask() {
             @Override
             public void run() {
-                calculateMag(Mag);
+                calculateMag(mag);
             }
         };
-        timer.schedule(task,100,40);
+        timer.schedule(task,100,20);
     }
 
     public void refreshMag(float[] mags){
-        Mag=(float)Math.sqrt(mags[0]*mags[0]+mags[1]*mags[1]+mags[2]*mags[2]);
+        mag=(float)Math.sqrt(mags[0]*mags[0]+mags[1]*mags[1]+mags[2]*mags[2]);
     }
 
     public void saveData(String path){//path=context.getExternalFilesDir(null)
@@ -56,69 +53,64 @@ public class MagDetector {
     }
 
     private void calculateMag(float mag){
-        if(Mags.length==0){
+        if(mag==0){
             return;
         }
 
-        Mags[count]=mag;
-        speed_value[count%speed_num]=Mags[count];
+        values[count]=mag;
 
-        if (file!=null){
-            file.WriteIntoFile(mag+"");
+        float[] data=new float[values.length];
+
+        for(int i=0,j=count+1;i<values.length;i++,j++){
+            if(j==values.length){
+                j=0;
+            }
+            data[i]=values[j];
         }
 
-        if (count%speed_num==speed_num-1){
-            detectorState();
-        }
+        data=Utils.smoothFilter(data,50);
 
-        if (++count==Num) {
-            count = 0;
-        }
-    }
+        float[] data2=Utils.diff(data);
 
-    private void detectorState(){
-        float[] diff=new float[speed_num-1];
+        data2=Utils.smoothFilter(data2,50);
 
-        for (int i=0;i<diff.length;i++){
-            diff[i]=speed_value[i+1]-speed_value[i];
+        float[] data3=new float[var_num];
+
+        for (int i=0;i<data3.length;i++){
+            data3[i]=data2[data2.length-i-1];
         }
 
         float ave=0;
         float var=0;
+        for(int i=0;i<data3.length;i++){
+            ave+=data3[i];
+        }
+        ave/=data3.length;
 
-        for (int i=0;i<diff.length;i++){
-            ave+=diff[i];
+        for(int i=0;i<data3.length;i++){
+            var+=(data3[i]-ave)*(data3[i]-ave);
         }
 
-        ave/=diff.length;
+        var=(float) Math.sqrt(var/data3.length);
 
-        for (int i=0;i<diff.length;i++){
-            var+=(float)Math.sqrt((diff[i]-ave)*(diff[i]-ave)) ;
+        speedCalculate(var);
+
+        if (++count==values.length){
+            count=0;
         }
-
-        var/=diff.length;
-        speedEstimate(var);
     }
 
-    private void speedEstimate(float var){
+    private void speedCalculate(float var){
+        speeds[speed_count]=var*ind;
 
-        int x=(int)(var/0.1);
+        float[] data=Utils.smoothFilter(speeds,20);
 
-        if (x<=5){
-            speed[speed_count]=0;
-        }else{
-            speed[speed_count]=var*2f;
+        if (callback!=null) {
+            callback.MagState(var, data[speed_count]);
         }
 
-        if(++speed_count==speed_n){
+        if (++speed_count==speeds.length){
             speed_count=0;
         }
-
-        float ave=0;
-        for (int i=0;i<speed.length;i++){
-            ave+=speed[i];
-        }
-
-        callback.MagState(var,ave/speed.length);
     }
 }

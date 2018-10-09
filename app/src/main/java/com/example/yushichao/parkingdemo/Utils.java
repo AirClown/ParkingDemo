@@ -319,6 +319,16 @@ public class Utils {
         return back;
     }
 
+    public static float[] diff(float[] values){
+        float[] data=new float[values.length-1];
+
+        for(int i=0;i<data.length;i++){
+            data[i]=values[i]-values[i+1];
+        }
+
+        return data;
+    }
+
 
 //    public static float[] smoothFilter(float[] data,int strength){
 //        if (strength>data.length){

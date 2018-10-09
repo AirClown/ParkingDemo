@@ -125,6 +125,8 @@ public class MyCamera1 {
     private Camera.PictureCallback pictureCallback=new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
+            camera.stopPreview();
+            Log.e("Takepicture","take");
             Camera.Size size = camera.getParameters().getPreviewSize();
             try {
                 //保存图片
@@ -141,7 +143,8 @@ public class MyCamera1 {
                 Log.e("Sys", "Error:" + ex.getMessage());
             }
 
-            RestartCamera();
+            camera.startPreview();
+            //RestartCamera();
             TAKING=false;
         }
     };
@@ -164,12 +167,12 @@ public class MyCamera1 {
         }
     };
 
-    private void RestartCamera(){
-        camera.stopPreview();
-        camera.release();
-        camera=null;
-        StartCamera();
-    }
+//    private void RestartCamera(){
+//        camera.stopPreview();
+//        camera.release();
+//        camera=null;
+//        StartCamera();
+//    }
 
     //彩色图转换bitmap
     private byte[] turnToGrey(Bitmap bitmap){
