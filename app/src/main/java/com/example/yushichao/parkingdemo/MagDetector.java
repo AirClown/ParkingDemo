@@ -22,7 +22,7 @@ public class MagDetector {
 
     private MagDetectorCallback callback;
 
-    public float ind=50f;
+    public float ind=35f;
 
     public interface MagDetectorCallback{
         void MagState(float var,float speed);

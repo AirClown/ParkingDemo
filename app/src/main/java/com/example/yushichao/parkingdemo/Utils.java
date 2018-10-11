@@ -10,8 +10,8 @@ import java.util.List;
  */
 
 public class Utils {
-    private static final int Indx=300;
-    private static final int Indy=300;
+    private static final int Indx=80;
+    private static final int Indy=220;
 
     public static List<Line> getLine(){
         List<Line> lines=new ArrayList<>();

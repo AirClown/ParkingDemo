@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import java.util.List;
@@ -36,18 +37,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //UI
     private Map map;
     private SurfaceView sv;
-    private Button camerabutton,pp,jj;
+    private Button camerabutton;
     private MyView mv;
     private Button bt;
+    private SeekBar sb;
 
     //控制器
     private MyCamera1 camera1;
     private MagDetector magDetector;
     private PositionCalCulate positionCalCulate;
 
-    //定时器
-    private Timer cameratimer;
-    private TimerTask cameratask;
+    //线程
+    private Thread cameraThread;
 
     private boolean pause=false;
 
@@ -78,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         @Override
         public void MagState(float var, float speed) {
             if (map!=null){
-                map.setText("速度估计:"+(int)(speed*3.6f)+"km/h"+"|方差："+var);
+                map.setText("速度估计:"+(int)(speed*3.6f)+"km/h"+"\r\n方差："+var);
             }
 
             if (positionCalCulate!=null){
@@ -107,12 +108,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         }
 
-        float[] aa={1,2,3,4,5,5,5,5,5,4,3,2,1};
-        aa=Utils.diff(aa);
-        for(int i=0;i<aa.length;i++){
-            Log.e("DAA",aa[i]+"");
-        }
-
         Init();
     }
 
@@ -125,6 +120,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         lamps=Utils.getLamp();
 
         //initUi
+        sb=(SeekBar)findViewById(R.id.seekBar);
         camerabutton=(Button)findViewById(R.id.camera);
         sv=(SurfaceView)findViewById(R.id.surfaceView);
         bt=(Button)findViewById(R.id.pause);
@@ -141,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         magDetector=new MagDetector(magDetectorCallback);
         magDetector.saveData(this.getExternalFilesDir(null)+"");
         camera1=new MyCamera1(this,sv,myCameraCallback);
-        //camera1.openCamera();
+        camera1.openCamera();
 
         positionCalCulate=new PositionCalCulate(positionCallback);
         positionCalCulate.setTopo(lines,lamps);
@@ -149,12 +145,32 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         camerabutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (cameratimer!=null){
-                    StopCameraTimer();
-                    Toast.makeText(MainActivity.this,"停止拍照",Toast.LENGTH_SHORT).show();
+                if(camera1==null){
+                    Toast.makeText(MainActivity.this,"程序正在初始化...",Toast.LENGTH_SHORT)
+                            .show();
+                }else if(cameraThread==null){
+                    cameraThread=new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                Thread.sleep(1000);
+                                while (true) {
+                                    Thread.sleep(100);
+                                    camera1.TakePhoto();
+                                }
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                    cameraThread.start();
+                    Toast.makeText(MainActivity.this,"开始连续拍照",Toast.LENGTH_SHORT)
+                            .show();
                 }else{
-                    StartCameraTimer(1000);
-                    Toast.makeText(MainActivity.this,"开始连续拍照",Toast.LENGTH_SHORT).show();
+                    cameraThread.interrupt();
+                    cameraThread=null;
+                    Toast.makeText(MainActivity.this,"停止拍照",Toast.LENGTH_SHORT)
+                            .show();
                 }
             }
         });
@@ -166,47 +182,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
 
-        pp=(Button)findViewById(R.id.button);
-        jj=(Button)findViewById(R.id.button2)  ;
-
-        pp.setOnClickListener(new View.OnClickListener() {
+        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onClick(View view) {
-                magDetector.ind*=1.1;
-                Toast.makeText(MainActivity.this,"参数扩大1.1倍，为"+magDetector.ind,Toast.LENGTH_SHORT)
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                magDetector.ind=progress;
+                Toast.makeText(MainActivity.this,"参数为"+magDetector.ind,Toast.LENGTH_SHORT)
                         .show();
             }
-        });
 
-        jj.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                magDetector.ind*=0.9;
-                Toast.makeText(MainActivity.this,"参数缩小为0.9倍，为"+magDetector.ind,Toast.LENGTH_SHORT)
-                        .show();
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
-    }
-
-    private void StopCameraTimer(){
-        if (cameratimer!=null) {
-            cameratimer.purge();
-            cameratimer.cancel();
-            cameratask.cancel();
-            cameratimer = null;
-            cameratask = null;
-        }
-    }
-
-    private void StartCameraTimer(int time){
-        cameratimer=new Timer();
-        cameratask=new TimerTask() {
-            @Override
-            public void run() {
-                camera1.TakePhoto();
-            }
-        };
-        cameratimer.schedule(cameratask,100,time);
     }
 
     @Override

@@ -108,7 +108,7 @@ public class MyCamera1 {
 
             camera.setPreviewDisplay(holder);
             camera.setDisplayOrientation(90);
-            camera.setPreviewCallback(previewCallback);
+            camera.setPreviewCallback(null);
             camera.startPreview();
         }catch (IOException e){
             e.printStackTrace();
@@ -136,7 +136,7 @@ public class MyCamera1 {
                 Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
 
                 //后续处理
-                getXY(turnToGrey(bitmap),bitmap.getWidth(),bitmap.getHeight());
+                //getXY(mean(bitmap),bitmap.getWidth(),bitmap.getHeight());
 
                 callback.UpdateText(""+System.currentTimeMillis());
             } catch (Exception ex) {
@@ -144,7 +144,6 @@ public class MyCamera1 {
             }
 
             camera.startPreview();
-            //RestartCamera();
             TAKING=false;
         }
     };
@@ -167,38 +166,56 @@ public class MyCamera1 {
         }
     };
 
-//    private void RestartCamera(){
-//        camera.stopPreview();
-//        camera.release();
-//        camera=null;
-//        StartCamera();
-//    }
-
-    //彩色图转换bitmap
-    private byte[] turnToGrey(Bitmap bitmap){
-        int width=bitmap.getWidth();
-        int height=bitmap.getHeight();
-
+    private float[] mean(Bitmap bitmap) {
+        int height=bitmap.getWidth();
+        int width=bitmap.getHeight();
         int[] pixels=new int[width*height];
-        bitmap.getPixels(pixels,0,width,0,0,width,height);
-        int alpha = 0xFF << 24;
-        final byte[] b=new byte[pixels.length];
-        for(int i = 0; i < height; i++)  {
-            for(int j = 0; j < width; j++) {
-                int grey = pixels[width * i + j];
+        bitmap.getPixels(pixels,0,height,0,0,height,width);
+        int step = 4;
+        int lenY2 = height/step;
+        float[] y = new float[width];
+        int red,green,blue;
 
-                int red = ((grey  & 0x00FF0000 ) >> 16);
-                int green = ((grey & 0x0000FF00) >> 8);
-                int blue = (grey & 0x000000FF);
-
-                grey = (int)((float) red * 0.3 + (float)green * 0.59 + (float)blue * 0.11);
-                grey = alpha | (grey << 16) | (grey << 8) | grey;
-                pixels[width * i + j] = grey;
-                b[width * i + j]=(byte) (grey & 0xFF);
+        for (int i = 0; i < width; i++) {
+            red = 0;
+            green = 0;
+            blue = 0;
+            for (int j = 0; j < height; j+=step) {
+                red += ((pixels[i * width + j] & 0x00FF0000) >> 16);
+                green += ((pixels[i * width + j] & 0x0000FF00) >> 8);
+                blue += (pixels[i * width + j] & 0x000000FF);
             }
+            //y[width - i - 1] = ((float)red*0.3f+(float)green*0.59f+(float)blue*0.11f) / (float) (lenY2);
+            y[i] = ((float)red*0.3f+(float)green*0.59f+(float)blue*0.11f) / (float) (lenY2);
         }
-        return b;
+        return y;
     }
+
+//    //彩色图转换bitmap
+//    private byte[] turnToGrey(Bitmap bitmap){
+//        int width=bitmap.getWidth();
+//        int height=bitmap.getHeight();
+//
+//        int[] pixels=new int[width*height];
+//        bitmap.getPixels(pixels,0,width,0,0,width,height);
+//        int alpha = 0xFF << 24;
+//        final byte[] b=new byte[pixels.length];
+//        for(int i = 0; i < height; i++)  {
+//            for(int j = 0; j < width; j++) {
+//                int grey = pixels[width * i + j];
+//
+//                int red = ((grey  & 0x00FF0000 ) >> 16);
+//                int green = ((grey & 0x0000FF00) >> 8);
+//                int blue = (grey & 0x000000FF);
+//
+//                grey = (int)((float) red * 0.3 + (float)green * 0.59 + (float)blue * 0.11);
+//                grey = alpha | (grey << 16) | (grey << 8) | grey;
+//                pixels[width * i + j] = grey;
+//                b[width * i + j]=(byte) (grey & 0xFF);
+//            }
+//        }
+//        return b;
+//    }
 
     private void SavePicture(byte[] bytes){
         String addr=activity.getExternalFilesDir(null)+"/";
@@ -215,7 +232,7 @@ public class MyCamera1 {
         }
     }
 
-    private void getXY(byte[] data,int width,int height){
+    private void getXY(float[] data,int width,int height){
         int XY=0;
 
         if (callback!=null){
