@@ -153,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         @Override
                         public void run() {
                             try {
-                                Thread.sleep(1000);
+                                Thread.sleep(500);
                                 while (true) {
                                     Thread.sleep(100);
                                     camera1.TakePhoto();
